@@ -11,8 +11,8 @@ import br.com.jobinder.matchingservice.infra.exception.MatchNotFoundException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,6 +33,7 @@ public class MatchingService {
     @Value("${rabbitmq.queues.match-created}")
     private String matchCreatedQueue;
 
+    @Transactional
     public MatchResponseDTO createMatch(UUID clientUserId, MatchCreateDTO createDto) {
         var professionalUserId = createDto.professionalUserId();
 
@@ -72,7 +73,6 @@ public class MatchingService {
                 .collect(Collectors.toList());
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     public List<Match> getAllMatchesDTO() {
         return matchRepository.findAll();
     }
