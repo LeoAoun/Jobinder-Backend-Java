@@ -3,6 +3,7 @@
 Jobinder é uma plataforma projetada para conectar profissionais que oferecem serviços a clientes que os procuram, funcionando de forma similar a um "Tinder" para empregos e serviços.
 
 ---
+
 ## 💻 Tecnologias Utilizadas
 
 - **Linguagem:** Java 17
@@ -47,10 +48,10 @@ flowchart TD
         MQ[(RabbitMQ)]
 
         subgraph "Bancos de Dados"
-            DB_Auth[(Auth DB<br/>PostgreSQL:5432)]
-            DB_Identity[(Identity DB<br/>PostgreSQL:5433)]
-            DB_Matching[(Matching DB<br/>PostgreSQL:5434)]
-            DB_Chat[(Chat DB<br/>PostgreSQL:5435)]
+            DB_Auth[(Auth DB<br/>PostgreSQL)]
+            DB_Identity[(Identity DB<br/>PostgreSQL)]
+            DB_Matching[(Matching DB<br/>PostgreSQL)]
+            DB_Chat[(Chat DB<br/>PostgreSQL)]
         end
     end
 
@@ -113,19 +114,22 @@ flowchart TD
 Abaixo estão os esquemas de banco de dados para cada serviço.
 
 ### Identity Service
-<center>
-    <img src="./readme-images/Identity-Service-Schema.png" alt="Texto alternativo" width="60%">
-</center>
+
+<p align="center">
+  <img src="./readme-images/Identity-Service-Schema.png" width="60%" />
+</p>
 
 ### Matching Service
-<center>
-    <img src="./readme-images/Matching-Service-Schema.png" alt="Texto alternativo" width="35%">
-</center>
+
+<p align="center">
+  <img src="./readme-images/Matching-Service-Schema.png" width="35%" />
+</p>
 
 ### Chat Service
-<center>
-    <img src="./readme-images/Chat-Service-Schema.png" alt="Texto alternativo" width="60%">
-</center>
+
+<p align="center">
+  <img src="./readme-images/Chat-Service-Schema.png" width="60%" />
+</p>
 
 ## 📖 Documentação da API (Swagger)
 
@@ -159,15 +163,7 @@ cd jobinder-backend-java
 
 ### 2. Configurar Variáveis de Ambiente (Obrigatório):
 
-O docker-compose.yml está configurado para ler segredos (como JWT_SECRET) de um arquivo .env. Crie um arquivo chamado .env na raiz do projeto:
-
-```bash
-# Segredo para assinatura dos tokens JWT (use um valor longo e seguro)
-JWT_SECRET=seu-segredo-super-forte-e-longo-aqui-1234567890
-
-# Chave para comunicação interna entre serviços
-API_KEY_VALUE=sua-api-key-secreta-aqui-1234567890
-```
+O docker-compose.yml está configurado para ler segredos (como JWT_SECRET) de um arquivo .env.
 
 ### 3. Subir os Containers:
 

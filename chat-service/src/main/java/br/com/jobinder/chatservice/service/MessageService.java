@@ -5,9 +5,10 @@ import br.com.jobinder.chatservice.domain.message.Message;
 import br.com.jobinder.chatservice.domain.message.MessageRepository;
 import br.com.jobinder.chatservice.dto.WebSocketMessageDTO;
 import br.com.jobinder.chatservice.dto.message.MessageDTO;
-import br.com.jobinder.chatservice.infra.ConversationNotFoundException;
+import br.com.jobinder.chatservice.infra.exception.ConversationNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -52,5 +53,13 @@ public class MessageService {
                         message.getConversation().getId()
                 ))
                 .toList();
+    }
+
+    @Transactional
+    public void deleteMessagesByConversationId(UUID conversationId) {
+        if (!conversationRepository.existsById(conversationId)) {
+            throw new ConversationNotFoundException("Conversation not found with ID: " + conversationId);
+        }
+        messageRepository.deleteByConversationId(conversationId);
     }
 }

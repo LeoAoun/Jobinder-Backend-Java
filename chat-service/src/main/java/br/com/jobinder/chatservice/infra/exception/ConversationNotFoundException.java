@@ -1,4 +1,4 @@
-package br.com.jobinder.chatservice.infra;
+package br.com.jobinder.chatservice.infra.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

@@ -1,0 +1,165 @@
+version: '3.8'
+
+networks:
+  jobinder-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+
+services:
+  postgres-db:
+    image: postgres:14-alpine
+    container_name: postgres-db-jobinder
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    networks:
+      - jobinder-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d jobinder_identity_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: rabbitmq-jobinder
+    ports:
+      - "${RABBITMQ_HOST_PORT}:5672"
+      - "${RABBITMQ_ADMIN_PORT}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - jobinder-net
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build:
+      context: ./auth-service
+    container_name: auth-service-jobinder
+    ports:
+      - "${AUTH_SERVER_PORT}:8080"
+    networks:
+      - jobinder-net
+    depends_on:
+      - identity-service
+    environment:
+      # JWT and API Configuration (from .env)
+      - jwt.secret=${JWT_SECRET}
+      - jwt.expiration-ms=${JWT_EXPIRATION}
+      - service.api-key.value=${API_SERVICE_SECRET}
+
+      # Feign Client configuration to communicate with Identity Service
+      - identity-service.url=${IDENTITY_SERVICE_URL_INTERNAL}
+
+      - SERVER_PORT=8080
+
+  identity-service:
+    build:
+      context: ./identity-service
+    container_name: identity-service-jobinder
+    ports:
+      - "${IDENTITY_SERVER_PORT}:8081"
+    networks:
+      - jobinder-net
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    environment:
+      # JWT and API Configuration (from .env)
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION}
+      - SERVICE_API_KEY_VALUE=${API_SERVICE_SECRET}
+
+      # Database Configuration (from .env)
+      - SPRING_DATASOURCE_URL=${IDENTITY_DATABASE_URL}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - spring.jpa.hibernate.ddl-auto=update
+
+      - SERVER_PORT=8081
+
+  matching-service:
+    build:
+      context: ./matching-service
+    container_name: matching-service-jobinder
+    ports:
+      - "${MATCHING_SERVER_PORT}:8082"
+    networks:
+      - jobinder-net
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      identity-service:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      # JWT and API Configuration (from .env)
+      - jwt.secret=${JWT_SECRET}
+      - jwt.expiration-ms=${JWT_EXPIRATION}
+      - service.api-key.value=${API_SERVICE_SECRET}
+
+      # Database Configuration (from .env)
+      - SPRING_DATASOURCE_URL=${MATCHING_DATABASE_URL}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - spring.jpa.hibernate.ddl-auto=update
+
+      # RabbitMQ Configuration
+      - spring.rabbitmq.host=${RABBITMQ_HOST}
+      - rabbitmq.queues.match-created=${RABBITMQ_QUEUES_MATCH_CREATED}
+
+      # Feign Client configuration to communicate with Identity Service 
+      - identity-service.url=${IDENTITY_SERVICE_URL_INTERNAL}
+
+      - SERVER_PORT=8082
+
+  chat-service:
+    build:
+      context: ./chat-service
+    container_name: chat-service-jobinder
+    ports:
+      - "${CHAT_SERVER_PORT}:8083"
+    networks:
+      - jobinder-net
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      identity-service:
+        condition: service_started
+    environment:
+      # Security Configuration (from .env)
+      - jwt.secret=${JWT_SECRET}
+      - jwt.expiration-ms=${JWT_EXPIRATION}
+      - service.api-key.value=${API_SERVICE_SECRET}
+
+      # Database Configuration (from .env)
+      - SPRING_DATASOURCE_URL=${CHAT_DATABASE_URL}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - spring.jpa.hibernate.ddl-auto=update
+
+      # RabbitMQ Configuration
+      - rabbitmq.queues.match-created=${RABBITMQ_QUEUES_MATCH_CREATED}
+      - spring.rabbitmq.host=${RABBITMQ_HOST}
+
+      - SERVER_PORT=8083

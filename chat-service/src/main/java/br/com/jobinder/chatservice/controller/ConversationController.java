@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +25,22 @@ import java.util.UUID;
 public class ConversationController {
 
     private final ConversationService conversationService;
+
+    @Operation(summary = "Get the authenticated user conversations",
+            description = "Retrieves all conversations for the authenticated user (client or professional).")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Conversations retrieved successfully",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ConversationDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content)
+    })
+    @GetMapping("/me")
+    public ResponseEntity<List<ConversationDTO>> getMyConversations(Authentication authentication) {
+        UUID authenticatedUserId = UUID.fromString(authentication.getName());
+        List<ConversationDTO> conversations = conversationService.findConversationDTOsByUserId(authenticatedUserId);
+        return ResponseEntity.ok(conversations);
+    }
 
     @Operation(summary = "Get conversations by User ID",
             description = "Retrieves all conversations for the specified user ID (client or professional). " +
@@ -37,6 +55,7 @@ public class ConversationController {
             @ApiResponse(responseCode = "403", description = "Forbidden (user trying to access another user's conversations)",
                     content = @Content)
     })
+    @PreAuthorize("#userId.toString() == authentication.name or hasRole('ADMIN')")
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<ConversationDTO>> getConversationsByUserId(@PathVariable UUID userId) {
         List<ConversationDTO> conversations = conversationService.findConversationDTOsByUserId(userId);
@@ -54,7 +73,7 @@ public class ConversationController {
             @ApiResponse(responseCode = "403", description = "Forbidden (user is not part of this conversation)", content = @Content),
             @ApiResponse(responseCode = "404", description = "Conversation not found", content = @Content) // Service lança RuntimeException
     })
-    @GetMapping("/{conversationId}")
+    @PreAuthorize("@conversationService.isUserInConversation(#conversationId, authentication.name) or hasRole('ADMIN')")    @GetMapping("/{conversationId}")
     public ResponseEntity<ConversationDTO> getConversationById(@PathVariable UUID conversationId) {
         ConversationDTO conversation = conversationService.findConversationDTOById(conversationId);
         return ResponseEntity.ok(conversation);
@@ -77,6 +96,7 @@ public class ConversationController {
             @ApiResponse(responseCode = "403", description = "Forbidden (insufficient permissions)",
                     content = @Content)
     })
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/all")
     public ResponseEntity<List<ConversationDTO>> getAllConversations() {
         List<ConversationDTO> conversations = conversationService.findAllConversationDTOs();
