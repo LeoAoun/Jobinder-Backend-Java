@@ -33,13 +33,14 @@ class AuthenticationServiceTest {
         // Given
         String phoneNumber = "11999999999";
 
-        User mockUser = new User();
-        mockUser.setId(UUID.randomUUID());
-        mockUser.setPhone(phoneNumber);
-        mockUser.setPassword("senhaHash");
+        var user = new User();
+        user.setId(UUID.randomUUID());
+        user.setPhone(phoneNumber);
+        user.setPassword("hashedPassword");
 
+        // Mocking
         when(userRepository.findByPhone(phoneNumber))
-                .thenReturn(Optional.of(mockUser));
+                .thenReturn(Optional.of(user));
 
         // When
         UserDetails result = authenticationService.loadUserByUsername(phoneNumber);
@@ -47,18 +48,22 @@ class AuthenticationServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(phoneNumber, result.getUsername()); // Username is the phone number
-        assertEquals(mockUser.getPassword(), result.getPassword());
+        assertEquals(user.getPassword(), result.getPassword());
 
         // Verify
-        verify(userRepository, times(1)).findByPhone(phoneNumber);
+        verify(userRepository, times(1))
+                .findByPhone(phoneNumber);
     }
 
     @Test
-    @DisplayName("Should throw UsernameNotFoundException when user is not found by phone number")    void loadUserByUsername_WhenUserNotFound_ShouldThrowException() {
+    @DisplayName("Should throw UsernameNotFoundException when user is not found by phone number")
+    void loadUserByUsername_WhenUserNotFound_ShouldThrowException() {
         // Given
         String phoneNumber = "11888888888";
 
-        when(userRepository.findByPhone(phoneNumber)).thenReturn(Optional.empty());
+        // Mocking
+        when(userRepository.findByPhone(phoneNumber))
+                .thenReturn(Optional.empty());
 
         // When
         UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class, () -> {
@@ -69,6 +74,7 @@ class AuthenticationServiceTest {
         assertEquals("User not found with phone:" + phoneNumber, exception.getMessage());
 
         // Verify
-        verify(userRepository, times(1)).findByPhone(phoneNumber);
+        verify(userRepository, times(1))
+                .findByPhone(phoneNumber);
     }
 }

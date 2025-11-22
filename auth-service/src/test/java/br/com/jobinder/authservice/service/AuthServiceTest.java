@@ -38,56 +38,89 @@ class AuthServiceTest {
     @Test
     @DisplayName("Should return LoginResponseDTO when credentials are valid")
     void login_WithValidCredentials_ShouldReturnDTO() {
+        // Given
         var userId = UUID.randomUUID();
-        var loginRequest = new LoginRequestDTO("11999999999", "password123");
-        var userDTO = new InternalUserAuthDTO(userId, "11999999999", "$2a$10$hashedPasswordValue", "USER");
+        var loginRequest = new LoginRequestDTO(
+                "11999999999",
+                "password123"
+        );
+        var userDTO = new InternalUserAuthDTO(userId,
+                "11999999999",
+                "$2a$10$hashedPasswordValue",
+                "USER"
+        );
         var fakeToken = "fake.jwt.token";
 
-        when(identityServiceClient.getUserAuthDetails("11999999999")).thenReturn(userDTO);
-        when(passwordEncoder.matches("password123", "$2a$10$hashedPasswordValue")).thenReturn(true);
-        when(tokenProvider.generateToken(userDTO)).thenReturn(fakeToken);
+        // Mocking
+        when(identityServiceClient.getUserAuthDetails("11999999999"))
+                .thenReturn(userDTO);
+        when(passwordEncoder.matches("password123", "$2a$10$hashedPasswordValue"))
+                .thenReturn(true);
+        when(tokenProvider.generateToken(userDTO))
+                .thenReturn(fakeToken);
 
+        // When
         LoginResponseDTO response = authService.login(loginRequest);
 
+        // Then
         assertThat(response).isNotNull();
         assertThat(response.token()).isEqualTo(fakeToken);
         assertThat(response.type()).isEqualTo("Bearer");
 
-        verify(identityServiceClient, times(1)).getUserAuthDetails("11999999999");
-        verify(passwordEncoder, times(1)).matches("password123", "$2a$10$hashedPasswordValue");
-        verify(tokenProvider, times(1)).generateToken(userDTO);
+        // Verify
+        verify(identityServiceClient, times(1))
+                .getUserAuthDetails("11999999999");
+        verify(passwordEncoder, times(1))
+                .matches("password123", "$2a$10$hashedPasswordValue");
+        verify(tokenProvider, times(1))
+                .generateToken(userDTO);
     }
 
     @Test
     @DisplayName("Should throw InvalidCredentialsException when the password does not match")
     void login_WithIncorrectPassword_ShouldThrowException() {
+        // Given
         var userId = UUID.randomUUID();
         var loginRequest = new LoginRequestDTO("11999999999", "wrongPassword");
         var userDTO = new InternalUserAuthDTO(userId, "11999999999", "$2a$10$hashedPasswordValue", "USER");
 
-        when(identityServiceClient.getUserAuthDetails("11999999999")).thenReturn(userDTO);
-        when(passwordEncoder.matches("wrongPassword", "$2a$10$hashedPasswordValue")).thenReturn(false);
+        // Mocking
+        when(identityServiceClient.getUserAuthDetails("11999999999"))
+                .thenReturn(userDTO);
+        when(passwordEncoder.matches("wrongPassword", "$2a$10$hashedPasswordValue"))
+                .thenReturn(false);
 
+        // When & Then
         assertThatThrownBy(() -> authService.login(loginRequest))
                 .isInstanceOf(InvalidCredentialsException.class)
                 .hasMessage("Invalid phone number or password.");
 
-        verify(tokenProvider, never()).generateToken(any());
+        // Verify
+        verify(tokenProvider, never())
+                .generateToken(any());
     }
 
     @Test
     @DisplayName("Should throw exception when the user is not found")
     void login_WithNonExistentUser_ShouldThrowException() {
-        var loginRequest = new LoginRequestDTO("nonexistentPhone", "password123");
+        // Given
+        var loginRequest = new LoginRequestDTO(
+                "nonexistentPhone",
+                "password123"
+        );
 
         when(identityServiceClient.getUserAuthDetails("nonexistentPhone"))
                 .thenThrow(new RuntimeException("User not found"));
 
+        // When & Then
         assertThatThrownBy(() -> authService.login(loginRequest))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("User not found");
 
-        verify(passwordEncoder, never()).matches(any(), any());
-        verify(tokenProvider, never()).generateToken(any());
+        // Verify
+        verify(passwordEncoder, never())
+                .matches(any(), any());
+        verify(tokenProvider, never())
+                .generateToken(any());
     }
 }

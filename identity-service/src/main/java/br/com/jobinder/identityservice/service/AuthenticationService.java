@@ -14,9 +14,9 @@ public class AuthenticationService implements UserDetailsService {
     private UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // The username is the phone number in this case, because we are using phone-based authentication
-        return userRepository.findByPhone(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with phone:" + username));
+    public UserDetails loadUserByUsername(String phoneNumber) throws UsernameNotFoundException {
+        // The username is the phone number, because we are using phone-based authentication
+        return userRepository.findByPhone(phoneNumber)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with phone:" + phoneNumber));
     }
 }
