@@ -10,6 +10,7 @@ Jobinder é uma plataforma projetada para conectar profissionais que oferecem se
 - **Framework:** Spring Boot 3
 - **Segurança:** Spring Security (autenticação JWT)
 - **Banco de Dados:** Spring Data JPA, PostgreSQL
+- **Testes:** JUnit, Mockito
 - **Comunicação**:
   - REST APIs (Spring Web)
   - Comunicação síncrona: Spring Cloud OpenFeign
@@ -130,6 +131,38 @@ Abaixo estão os esquemas de banco de dados para cada serviço.
 <p align="center">
   <img src="./readme-images/Chat-Service-Schema.png" width="60%" />
 </p>
+
+## ✅ Testes Unitários
+
+O projeto possui uma suíte de testes unitários para garantir a confiabilidade da lógica de negócios e a integridade dos dados.
+
+- **Cobertura:**
+  - Testes cobrem todos **Microservices** (`Auth Service`, `Identity Service`, `Matching Service`, `Chat Service`).
+  - Validação de cenários de sucesso ("caminho feliz") e tratamento de exceções (erros de negócio, dados inválidos).
+  - Testes de integridade de dados e mapeamento de DTOs.
+
+### Como Rodar os Testes
+
+**Opção 1: Script Automatizado (Recomendado)**
+
+Na raíz do projeto, execute todos os testes de uma vez:
+
+```bash
+# Linux / Mac / Git Bash
+./test-all.sh
+
+# Windows (CMD / PowerShell)
+./test-all.bat
+```
+
+**Opção 2: Manualmente por Serviço**
+
+Navegue até a pasta do serviço desejado e execute:
+
+```bash
+cd ./{service-name}
+./mvnw test
+```
 
 ## 📖 Documentação da API (Swagger)
 
