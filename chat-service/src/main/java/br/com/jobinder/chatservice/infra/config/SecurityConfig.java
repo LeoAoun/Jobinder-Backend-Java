@@ -38,6 +38,8 @@ public class SecurityConfig {
                                 "/api-docs/**",
                                 "/ws/chat/**"
                         ).permitAll()
+                        // Allow access to actuator endpoints without authentication
+                        .requestMatchers("/actuator/**").permitAll()
                         // Need authentication for any other request
                         .anyRequest().authenticated()
                 )

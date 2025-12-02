@@ -37,6 +37,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/api-docs/**"
                         ).permitAll()
+                        // Allow access to actuator endpoints without authentication
+                        .requestMatchers("/actuator/**").permitAll()
                         // Need authentication for any other request
                         .anyRequest().authenticated()
                 )

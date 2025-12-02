@@ -49,10 +49,12 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/api-docs/**"
                         ).permitAll()
+                        // Allow access to actuator endpoints without authentication
+                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/register").permitAll()
                         .requestMatchers("/api/v1/internal/**").hasAuthority("ROLE_INTERNAL_SERVICE")
                         .requestMatchers("/api/v1/profiles/**").hasAuthority("ROLE_INTERNAL_SERVICE")
-                        .requestMatchers("/api/v1/users/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/users/admin/**").hasRole("ADMIN")                        
                         // Need authentication for any other request
                         .anyRequest().authenticated()
                 )

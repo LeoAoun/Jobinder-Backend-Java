@@ -11,6 +11,11 @@ Jobinder é uma plataforma projetada para conectar profissionais que oferecem se
 - **Segurança:** Spring Security (autenticação JWT)
 - **Banco de Dados:** Spring Data JPA, PostgreSQL
 - **Testes:** JUnit, Mockito
+- **Observabilidade e Monitoramento:**
+  - **Prometheus:** Coleta de métricas dos microserviços.
+  - **Elasticsearch:** Armazenamento centralizado de logs.
+  - **Logback:** Envio de logs estruturados para o Elasticsearch.
+  - **Grafana:** Visualização de métricas e logs em dashboards.
 - **Comunicação**:
   - REST APIs (Spring Web)
   - Comunicação síncrona: Spring Cloud OpenFeign
@@ -19,11 +24,10 @@ Jobinder é uma plataforma projetada para conectar profissionais que oferecem se
 - **Documentação: SpringDoc OpenAPI 3 (Swagger)**
 - **Build:** Apache Maven
 - **Containerização:** Docker & Docker Compose
-- **Utilitários:** Lombok
 
-## 🏛️ Arquitetura de Microsserviços
+## 🏛️ Arquitetura de Microserviços
 
-O backend da plataforma segue uma arquitetura de microsserviços orientada a eventos, com cada serviço tendo seu próprio banco de dados (Database per Service) para garantir o desacoplamento e a escalabilidade.
+O backend da plataforma segue uma arquitetura de microserviços orientada a eventos, com cada serviço tendo seu próprio banco de dados (Database per Service) para garantir o desacoplamento e a escalabilidade.
 
 ### Serviços Principais
 
@@ -132,6 +136,28 @@ Abaixo estão os esquemas de banco de dados para cada serviço.
   <img src="./readme-images/Chat-Service-Schema.png" width="60%" />
 </p>
 
+## 📊 Observabilidade e Monitoramento
+
+O projeto inclui uma stack de observabilidade rodando em containers Docker, permitindo monitorar a saúde, performance e logs de todos os serviços em tempo real.
+
+### 1. Prometheus (Métricas)
+
+- **Função:** Coleta métricas (CPU, Memória, Requisições HTTP, JVM) expostas pelos microserviços via Spring Boot Actuator.
+- **Acesso:** `http://localhost:9090`
+
+### 2. Elasticsearch (Logs Centralizados)
+
+- **Função:** Armazena os logs gerados por todos os microserviços.
+- **Integração:** Os serviços enviam logs diretamente via `Logback` para o Elasticsearch, eliminando a necessidade de acessar containers individuais para debug.
+- **Visualização:** Os logs podem ser consultados e filtrados diretamente na aba **"Explore"** do Grafana.
+
+### 3. Grafana (Dashboards)
+
+- **Função:** Visualização centralizada. Já configurado para se conectar ao Prometheus e ao Elasticsearch.
+- **Acesso:** `http://localhost:3000`
+- **Credenciais:** `admin` / `admin` (ou conforme configurado no `.env`)
+- **Dashboards Recomendados:** Importe dashboards como o ID `11378` (Spring Boot Statistics) para visualização instantânea.
+
 ## ✅ Testes Unitários
 
 O projeto possui uma suíte de testes unitários para garantir a confiabilidade da lógica de negócios e a integridade dos dados.
@@ -208,16 +234,22 @@ docker-compose up --build
 
 Nota: O --build força o Docker a construir as imagens do zero usando os Dockerfiles de cada serviço. Isso pode levar alguns minutos na primeira vez.
 
-### 4. Acessar os Serviços:
+### 4. Acessar os Serviços e Ferramentas:
 
 Após os logs estabilizarem, os serviços estarão disponíveis:
 
-- **Auth Service:** http://localhost:8080
-- **Identity Service:** http://localhost:8081
-- **Matching Service:** http://localhost:8082
-- **Chat Service:** http://localhost:8083
-- **RabbitMQ Admin:** http://localhost:15672 (login: guest / guest)
-- **PostgreSQL DB:** Acessível em localhost:5432 (login: postgres / postgres)
+- **APIs dos Microserviços:**
+  - Auth Service: `http://localhost:8080`
+  - Identity Service: `http://localhost:8081`
+  - Matching Service: `http://localhost:8082`
+  - Chat Service: `http://localhost:8083`
+- **Infraestrutura:**
+  - PostgreSQL DB: `localhost:5432`
+  - RabbitMQ Admin: `http://localhost:15672`
+- **Observabilidade:**
+  - Grafana: `http://localhost:3000`
+  - Prometheus: `http://localhost:9090`
+  - Elasticsearch: `http://localhost:9200`
 
 ## Rodando Localmente (Alternativa, para Debug)
 
@@ -225,4 +257,4 @@ Você também pode rodar cada serviço individualmente pela sua IDE (IntelliJ, V
 
 1. **Inicie as Dependências:** Você precisa ter instâncias do PostgreSQL e RabbitMQ rodando localmente (ou via Docker).
 2. **Configure os application.properties:** Certifique-se de que cada application.properties (em cada pasta de serviço) aponte para localhost (ex: spring.datasource.url=jdbc:postgresql://localhost:5432/...).
-3. **Inicie cada Serviço:** Abra cada pasta de microsserviço (ex: auth-service, identity-service) e inicie a aplicação Spring Boot (pelo main ou mvn spring-boot:run).
+3. **Inicie cada Serviço:** Abra cada pasta de microserviço (ex: auth-service, identity-service) e inicie a aplicação Spring Boot (pelo main ou mvn spring-boot:run).

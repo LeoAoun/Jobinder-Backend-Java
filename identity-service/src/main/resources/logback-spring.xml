@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+    <appender name="ELASTIC" class="com.internetitem.logback.elasticsearch.ElasticsearchAppender">
+        <url>http://elasticsearch:9200/_bulk</url>
+        <index>logs-%date{yyyy-MM-dd}</index>
+        <type>_doc</type>
+        <connectTimeout>30000</connectTimeout>
+        <errorsToStderr>true</errorsToStderr>
+        <includeCallerData>false</includeCallerData>
+        <logsToStderr>false</logsToStderr>
+        <maxQueueSize>104857600</maxQueueSize>
+        <maxMessageSize>100</maxMessageSize>
+        
+        <headers>
+            <header>
+                <name>Content-Type</name>
+                <value>application/json</value>
+            </header>
+        </headers>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="ELASTIC"/>
+    </root>
+</configuration>
