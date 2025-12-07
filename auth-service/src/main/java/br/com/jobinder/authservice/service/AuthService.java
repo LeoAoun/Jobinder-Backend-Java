@@ -4,6 +4,7 @@ import br.com.jobinder.authservice.client.IdentityServiceClient;
 import br.com.jobinder.authservice.dto.InternalUserAuthDTO;
 import br.com.jobinder.authservice.dto.LoginRequestDTO;
 import br.com.jobinder.authservice.dto.LoginResponseDTO;
+import br.com.jobinder.authservice.infra.exception.UserNotFoundException;
 import br.com.jobinder.authservice.infra.security.JwtTokenProvider;
 import br.com.jobinder.authservice.infra.exception.InvalidCredentialsException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +24,17 @@ public class AuthService {
     private JwtTokenProvider tokenProvider;
 
     public LoginResponseDTO login(LoginRequestDTO loginRequest) {
-        // Call the Identity Service to get user details by phone number
-        InternalUserAuthDTO userDetails = identityServiceClient.getUserAuthDetails(loginRequest.phone());
+        InternalUserAuthDTO userDetails;
+
+        try {
+            userDetails = identityServiceClient.getUserAuthDetails(loginRequest.phone());
+        } catch (Exception e) {
+            throw new UserNotFoundException("User not found with phone: " + loginRequest.phone());
+        }
+
+        if (userDetails == null) {
+            throw new UserNotFoundException("User not found with phone: " + loginRequest.phone());
+        }
 
         // Validate password
         if (!passwordEncoder.matches(loginRequest.password(), userDetails.hashedPassword())) {
