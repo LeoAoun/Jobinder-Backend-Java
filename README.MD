@@ -17,6 +17,7 @@ Jobinder é uma plataforma projetada para conectar profissionais que oferecem se
   - **Logback:** Envio de logs estruturados para o Elasticsearch.
   - **Grafana:** Visualização de métricas e logs em dashboards.
 - **Comunicação**:
+  - **API Gateway:** Nginx (Proxy Reverso e Roteamento)
   - REST APIs (Spring Web)
   - Comunicação síncrona: Spring Cloud OpenFeign
   - Comunicação assíncrona: RabbitMQ (Spring AMQP)
@@ -31,10 +32,12 @@ O backend da plataforma segue uma arquitetura de microserviços orientada a even
 
 ### Serviços Principais
 
-- **Auth Service (Porta 8080):** Responsável pela autenticação (`/login`) e geração de tokens JWT. É _stateless_ (sem banco de dados) e consulta o `identity-service` para validar as credenciais do usuário.
-- **Identity Service (Porta 8081):** O "serviço de verdade" (source of truth) para identidade. Gerencia o cadastro de usuários (`User`), perfis de serviço (`ServiceProfile`), `Locations` e `Specialties`. Armazena os dados em seu próprio banco.
-- **Matching Service (Porta 8082):** Gerencia a lógica de "match" entre um cliente e um profissional. Quando um match é criado, ele salva o `Match` em seu banco de dados e publica um evento `MatchCreatedEvent` no RabbitMQ.
-- **Chat Service (Porta 8083):** Consome eventos de match do RabbitMQ para criar `Conversations`. Gerencia a comunicação em tempo real entre os usuários (via WebSockets) e armazena o histórico de `Messages` em seu banco.
+A arquitetura utiliza um **API Gateway (Nginx)** como ponto único de entrada (`http://localhost`). Os serviços rodam em containers isolados na rede Docker e não são acessíveis diretamente pelas portas externas.
+
+- **Auth Service (Interno: 8080):** Responsável pela autenticação (`/login`) e geração de tokens JWT. É _stateless_ (sem banco de dados) e consulta o `identity-service` para validar as credenciais do usuário.
+- **Identity Service (Interno: 8081):** O "serviço de verdade" (source of truth) para identidade. Gerencia o cadastro de usuários (`User`), perfis de serviço (`ServiceProfile`), `Locations` e `Specialties`. Armazena os dados em seu próprio banco.
+- **Matching Service (Interno: 8082):** Gerencia a lógica de "match" entre um cliente e um profissional. Quando um match é criado, ele salva o `Match` em seu banco de dados e publica um evento `MatchCreatedEvent` no RabbitMQ.
+- **Chat Service (Interno: 8083):** Consome eventos de match do RabbitMQ para criar `Conversations`. Gerencia a comunicação em tempo real entre os usuários (via WebSockets) e armazena o histórico de `Messages` em seu banco.
 
 ### Dependências de Infraestrutura
 
@@ -192,12 +195,12 @@ cd ./{service-name}
 
 ## 📖 Documentação da API (Swagger)
 
-Após iniciar os serviços (com qualquer um dos métodos acima), a documentação da API de cada serviço estará disponível nos seguintes links:
+A documentação interativa (OpenAPI 3) está acessível através do API Gateway.
 
-- **Auth Service:** http://localhost:8080/swagger-ui.html
-- **Identity Service:** http://localhost:8081/swagger-ui.html
-- **Matching Service:** http://localhost:8082/swagger-ui.html
-- **Chat Service:** http://localhost:8083/swagger-ui.html
+- **Auth Service:** http://localhost/swagger/auth/index.html
+- **Identity Service:** http://localhost/swagger/identity/index.html
+- **Matching Service:** http://localhost/swagger/matching/index.html
+- **Chat Service:** http://localhost/swagger/chat/index.html
 
 ---
 
@@ -236,18 +239,19 @@ Nota: O --build força o Docker a construir as imagens do zero usando os Dockerf
 
 ### 4. Acessar os Serviços e Ferramentas:
 
-Após os logs estabilizarem, os serviços estarão disponíveis:
+- **API Gateway (Ponto Único):** `http://localhost`
+  - **Auth:** `http://localhost/api/v1/auth`
+  - **Identity:** `http://localhost/api/v1/users`
+  - **Matching:** `http://localhost/api/v1/matches`
+  - **Chat (REST):** `http://localhost/api/v1/chat`
+  - **Chat (WebSocket):** `ws://localhost/ws`
 
-- **APIs dos Microserviços:**
-  - Auth Service: `http://localhost:8080`
-  - Identity Service: `http://localhost:8081`
-  - Matching Service: `http://localhost:8082`
-  - Chat Service: `http://localhost:8083`
-- **Infraestrutura:**
+- **Infraestrutura (Portas de Admin mantidas):**
   - PostgreSQL DB: `localhost:5432`
-  - RabbitMQ Admin: `http://localhost:15672`
+  - RabbitMQ Admin: `http://localhost:15672` (Login: `guest`/`guest`)
+
 - **Observabilidade:**
-  - Grafana: `http://localhost:3000`
+  - Grafana: `http://localhost:3000` (Login: `admin`/`admin`)
   - Prometheus: `http://localhost:9090`
   - Elasticsearch: `http://localhost:9200`
 
